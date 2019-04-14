@@ -1,3 +1,5 @@
+import etherscan
+
 '''
 @dev given to address extracts the last 10 characters from them and converts them to
 hex then calculates the distance in meters between the 2
