@@ -1,4 +1,6 @@
 import etherscan
+import requests
+from datetime import datetime
 
 '''
 @dev given to address extracts the last 10 characters from them and converts them to
@@ -37,14 +39,39 @@ def getrequireCO2(km):
 def tometricTonne(grams):
     return round(grams/(1*10**6))
 '''
-@dev main function that does everything
+@dev calculates requierd co2 using the given paramaters
+@param to ethereum address the kitty is coming from
+@param frm ethereum address is being sent to
 '''
-def operate():
-    to=input("address to\n")
-    frm=input("address from\n")
+def calculateCO2(to,frm):
     dist =distance(to,frm)
     dist=toKilometers(dist)
     requiredCo2=getrequireCO2(dist)
     metric=tometricTonne(requiredCo2)
-    print("C02 required in metric tonne: ",metric)
-operate()
+    #print("C02 required in metric tonne: ",metric)
+    return metric
+'''
+@dev main function that does everything outputs file (Co2Required.txt) with all calculated c02 required for transfering kitties
+'''
+def process():
+        address="0x06012c8cf97BEaD5deAe237070F9587f8E7A266d"
+        url= "https://api.etherscan.io/api?module=account&action=txlist&address="+address+"&startblock=0&endblock=99999999&page=1&offset=1000000&sort=desc&apikey=YourApiKeyToken"
+        response=requests.get(url)
+        content=response.json()
+        results=content.get("result")
+        file=open("output.json","w")
+        co2=open("Co2Required.txt","w")
+        file.write(str(results))
+        for n,transaction in enumerate(results):
+            to=transaction.get("to")
+            frm=transaction.get("from")
+            timestamp=int(transaction.get("timeStamp"))
+            co2Required=calculateCO2(to,frm)
+            convertedTimestamp = datetime.fromtimestamp(timestamp)
+            #print("to",to,"from",frm,"date",convertedTimestamp)
+            line="address to: "+to+" address from: "+frm+" C02 Required in metric tonne: "+str(co2Required)+" Date: "+str(convertedTimestamp)
+            co2.write(line)
+            co2.write("\n")
+        co2.close()
+
+process()
